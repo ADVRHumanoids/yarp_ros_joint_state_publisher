@@ -7,6 +7,9 @@ project(yarp_ros_joint_state_publisher)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  roslib
+  urdf
+  srdfdom
 )
 
 ## System dependencies are found with CMake's conventions
@@ -84,7 +87,7 @@ find_package(Eigen REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES yarp_interface
-  CATKIN_DEPENDS roscpp rospy
+  CATKIN_DEPENDS roscpp rospy roslib urdf srdfdom
   DEPENDS system_lib
 )
 
@@ -109,7 +112,7 @@ include_directories(include ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ${Eigen_IN
 # add_dependencies(yarp_ros_joint_state_publisher_node yarp_ros_joint_state_publisher_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(yarp_ros_interface ${YARP_LIBRARIES} icubmod ${ICUB_LIBRARIES})
+ target_link_libraries(yarp_ros_interface ${YARP_LIBRARIES} icubmod ${ICUB_LIBRARIES} ${catkin_LIBRARIES})
  target_link_libraries(yarp_ros_joint_state_publisher_node yarp_ros_interface ${YARP_LIBRARIES} icubmod
                         ${ICUB_LIBRARIES} ${catkin_LIBRARIES})
 
