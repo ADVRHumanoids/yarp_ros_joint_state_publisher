@@ -1,29 +1,41 @@
 #include "ros_interface.h"
 #include <yarp/sig/all.h>
+#include <ros/package.h>
+
 
 #define Deg2Rad(X) (X * M_PI/180.0)
-
-static const char *kinematic_chains[5]  = {"torso", "right_leg", "left_leg", "right_arm", "left_arm"};
-static const char *torso_joint_names[3] = {"WaistYaw", "WaistLat", "WaistSag"};
-static const char *r_leg_joint_names[6] = {"RHipSag", "RHipLat", "RHipYaw", "RKneeSag", "RAnkLat", "RAnkSag"};
-static const char *l_leg_joint_names[6] = {"LHipSag", "LHipLat", "LHipYaw", "LKneeSag", "LAnkLat", "LAnkSag"};
-static const char *r_arm_joint_names[7] = {"RShSag", "RShLat", "RShYaw", "RElbj", "RForearmPlate", "RWrj1", "RWrj2"};
-static const char *l_arm_joint_names[7] = {"LShSag", "LShLat", "LShYaw", "LElbj", "LForearmPlate", "LWrj1", "LWrj2"};
 
 ros_interface::ros_interface():
     _kinematic_chains(),
     _n(),
     _joint_state_pub()
 {
+    std::string path_to_urdf = ros::package::getPath("coman_urdf") + "/urdf/coman.urdf";
+    std::string path_to_srdf = ros::package::getPath("coman_moveit_config") + "/config/COMAN.srdf";
+
+    if(coman_urdf.initFile(path_to_urdf))
+    {
+        ROS_INFO("Correctly loaded COMAN URDF!");
+        if(coman_srdf.initFile(coman_urdf, path_to_srdf))
+        {
+            ROS_INFO("Correctly loaded COMAN SRDF!");
+            checkSRDF();
+        }
+        else
+            ROS_ERROR("Can not load COMAN SRDF!");
+    }
+    else
+        ROS_ERROR("Can not load COMAN URDF!");
+
     _joint_state_pub = _n.advertise<sensor_msgs::JointState>("joint_states", 1);
 }
 
 void ros_interface::addKinematicChain(const boost::shared_ptr<yarp_kinematic_chain> &kinematic_chain)
 {
     std::string name = kinematic_chain->getName();
-    for(unsigned int i = 0; i < 5; ++i)
-    {
-        if(name.compare(kinematic_chains[i]) == 0)
+    for(unsigned int i = 0; i < kinematic_chains.size(); ++i)
+    {           
+        if(name.compare(kinematic_chains[i].first) == 0)
         {
             _kinematic_chains.push_back(kinematic_chain);
             unsigned int i = _kinematic_chains.size();
@@ -38,35 +50,20 @@ void ros_interface::addKinematicChain(const boost::shared_ptr<yarp_kinematic_cha
 bool ros_interface::setJointNames(const std::string &name,
                                   sensor_msgs::JointState& _joint_state_msg)
 {
-    if(name.compare(kinematic_chains[0]) == 0) //torso
+    for(unsigned int i = 0; i < kinematic_chains.size(); ++i)
     {
-        for(unsigned int i = 0; i < 3; ++i)
-            _joint_state_msg.name.push_back(torso_joint_names[i]);
-        return true;
-    }
-    if(name.compare(kinematic_chains[1]) == 0) //right_leg
-    {
-        for(unsigned int i = 0; i < 6; ++i)
-            _joint_state_msg.name.push_back(r_leg_joint_names[i]);
-        return true;
-    }
-    if(name.compare(kinematic_chains[2]) == 0) //left_leg
-    {
-        for(unsigned int i = 0; i < 6; ++i)
-            _joint_state_msg.name.push_back(l_leg_joint_names[i]);
-        return true;
-    }
-    if(name.compare(kinematic_chains[3]) == 0) //right_arm
-    {
-        for(unsigned int i = 0; i < 7; ++i)
-            _joint_state_msg.name.push_back(r_arm_joint_names[i]);
-        return true;
-    }
-    if(name.compare(kinematic_chains[4]) == 0) //left_arm
-    {
-        for(unsigned int i = 0; i < 7; ++i)
-            _joint_state_msg.name.push_back(l_arm_joint_names[i]);
-        return true;
+        if(name.compare(kinematic_chains[i].first) == 0)
+        {
+            for(unsigned int j = 0; j < chain_joint_maps.size(); ++j)
+            {
+                if(kinematic_chains[i].first.compare(chain_joint_maps[j].first) == 0)
+                {
+                    _joint_state_msg.name.push_back(chain_joint_maps[j].second);
+                    //ROS_INFO("%s joint belongs to %s chain", chain_joint_maps[j].second.c_str(), kinematic_chains[i].first.c_str());
+                }
+            }
+            return true;
+        }
     }
     return false;
 }

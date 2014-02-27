@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     IRos.addKinematicChain(l_arm);
 
     ROS_INFO("Beginning publishing joints state");
-    ros::Rate loop_rate(100);
+    ros::Rate loop_rate(50);
     while(ros::ok())
     {
         IRos.publish();
