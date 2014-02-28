@@ -16,6 +16,7 @@ public:
 
     void addKinematicChain(const boost::shared_ptr<yarp_kinematic_chain>& kinematic_chain);
     void publish();
+    std::vector< std::pair<std::string, int> >& getKinematicChains(){return kinematic_chains;}
 
 private:
     std::vector<boost::shared_ptr<yarp_kinematic_chain> > _kinematic_chains;

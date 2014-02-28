@@ -19,25 +19,21 @@ int main(int argc, char **argv)
     }
     ROS_INFO("Starting yarp_ros_joint_state_publisher node");
 
-    boost::shared_ptr<yarp_kinematic_chain> torso(new yarp_kinematic_chain("torso"));
-    boost::shared_ptr<yarp_kinematic_chain> r_leg(new yarp_kinematic_chain("right_leg"));
-    boost::shared_ptr<yarp_kinematic_chain> l_leg(new yarp_kinematic_chain("left_leg"));
-    boost::shared_ptr<yarp_kinematic_chain> r_arm(new yarp_kinematic_chain("right_arm"));
-    boost::shared_ptr<yarp_kinematic_chain> l_arm(new yarp_kinematic_chain("left_arm"));
-
     ros_interface IRos;
-    /** The order is important!
+
+    for(unsigned int i = 0; i < IRos.getKinematicChains().size(); ++i)
+    {
+        boost::shared_ptr<yarp_kinematic_chain> chain(new yarp_kinematic_chain(IRos.getKinematicChains()[i].first));
+        IRos.addKinematicChain(chain);
+    }
+
+
+    /** The order is important! (MAYBE NOT!)
       1. torso
       2. r_leg
       3. l_leg
       4. r_arm
       5. l_arm              **/
-    IRos.addKinematicChain(torso);
-    IRos.addKinematicChain(r_leg);
-    IRos.addKinematicChain(l_leg);
-    IRos.addKinematicChain(r_arm);
-    IRos.addKinematicChain(l_arm);
-
     ROS_INFO("Beginning publishing joints state");
     ros::Rate loop_rate(50);
     while(ros::ok())
