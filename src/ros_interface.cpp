@@ -11,7 +11,7 @@ ros_interface::ros_interface():
     _joint_state_pub()
 {
     std::string path_to_urdf = ros::package::getPath("coman_urdf") + "/urdf/coman.urdf";
-    std::string path_to_srdf = ros::package::getPath("coman_moveit_config") + "/config/COMAN.srdf";
+    std::string path_to_srdf = ros::package::getPath("coman_srdf") + "/srdf/coman.srdf";
 
     if(coman_urdf.initFile(path_to_urdf))
     {
