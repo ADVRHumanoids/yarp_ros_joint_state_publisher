@@ -27,13 +27,6 @@ int main(int argc, char **argv)
         IRos.addKinematicChain(chain);
     }
 
-
-    /** The order is important! (MAYBE NOT!)
-      1. torso
-      2. r_leg
-      3. l_leg
-      4. r_arm
-      5. l_arm              **/
     ROS_INFO("Beginning publishing joints state");
     ros::Rate loop_rate(50);
     while(ros::ok())
