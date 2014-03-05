@@ -28,7 +28,9 @@ int main(int argc, char **argv)
     }
 
     ROS_INFO("Beginning publishing joints state");
-    ros::Rate loop_rate(50);
+    double hz = 50.0;
+    n.param("rate", hz, 50.0);
+    ros::Rate loop_rate(hz);
     while(ros::ok())
     {
         IRos.publish();
