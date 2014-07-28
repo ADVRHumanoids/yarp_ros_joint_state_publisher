@@ -17,9 +17,9 @@ find_package(Boost REQUIRED COMPONENTS system)
 find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(Eigen REQUIRED)
+set(ROS_LIB_FOLDER $ENV{ROS_LIB_FOLDER} CACHE STRING "ros lib folder")
 
-set(ROS_HYDRO_LIB_FOLDER /opt/ros/hydro/lib/)
-link_directories(${ROS_HYDRO_LIB_FOLDER})
+link_directories(${ROS_LIB_FOLDER})
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
