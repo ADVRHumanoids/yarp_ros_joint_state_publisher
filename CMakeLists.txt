@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(yarp_ros_joint_state_publisher)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
+
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -15,8 +18,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(YARP REQUIRED)
-find_package(ICUB REQUIRED)
+#find_package(ICUB REQUIRED)
 find_package(Eigen3 REQUIRED)
+
 set(ROS_LIB_FOLDER $ENV{ROS_LIB_FOLDER} CACHE STRING "ros lib folder")
 
 link_directories(${ROS_LIB_FOLDER})
@@ -99,7 +103,8 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
+include_directories(include ${YARP_INCLUDE_DIRS} #${ICUB_INCLUDE_DIRS}
+			 ${Eigen_INCLUDE_DIRS})
 #include_directories(${catkin_INCLUDE_DIRS})
 
 ## Declare a cpp library
@@ -114,9 +119,11 @@ include_directories(include ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ${Eigen_IN
 # add_dependencies(yarp_ros_joint_state_publisher_node yarp_ros_joint_state_publisher_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(yarp_ros_interface ${YARP_LIBRARIES} icubmod ${ICUB_LIBRARIES} ${catkin_LIBRARIES})
+ target_link_libraries(yarp_ros_interface ${YARP_LIBRARIES} icubmod #${ICUB_LIBRARIES}
+				 ${catkin_LIBRARIES})
  target_link_libraries(yarp_ros_joint_state_publisher_node yarp_ros_interface ${YARP_LIBRARIES} icubmod
-                        ${ICUB_LIBRARIES} ${catkin_LIBRARIES})
+                        #${ICUB_LIBRARIES} 
+			${catkin_LIBRARIES})
 
 #############
 ## Install ##
