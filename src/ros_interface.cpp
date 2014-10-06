@@ -1,122 +1,89 @@
 #include "ros_interface.h"
+#include "drc_shared/yarp_single_chain_interface.h"
 #include <yarp/sig/all.h>
 #include <ros/package.h>
-
-
+#include <drc_shared/idynutils.h>
 #define Deg2Rad(X) (X * M_PI/180.0)
 
 ros_interface::ros_interface():
-    _kinematic_chains(),
     _n(),
-    _joint_state_pub()
+    _joint_state_pub(),
+    iDynRobot("coman") //This can be changed or loaded on runtime!!
 {
-    std::string path_to_urdf = ros::package::getPath("coman_urdf") + "/urdf/coman.urdf";
-    std::string path_to_srdf = ros::package::getPath("coman_srdf") + "/srdf/coman.srdf";
-
-    if(coman_urdf.initFile(path_to_urdf))
-    {
-        ROS_INFO("Correctly loaded COMAN URDF!");
-        if(coman_srdf.initFile(coman_urdf, path_to_srdf))
-        {
-            ROS_INFO("Correctly loaded COMAN SRDF!");
-            checkSRDF();
-        }
-        else
-            ROS_ERROR("Can not load COMAN SRDF!");
-    }
-    else
-        ROS_ERROR("Can not load COMAN URDF!");
-
     _joint_state_pub = _n.advertise<sensor_msgs::JointState>("joint_states", 1);
+        
+    initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm);
+    
+    initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg);
+    
+    initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm);
+    
+    initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg);
+    
+    initialize_chain(walkman::robot::torso,&iDynRobot.torso);
+    
 }
 
-void ros_interface::addKinematicChain(const boost::shared_ptr<yarp_kinematic_chain> &kinematic_chain)
+void ros_interface::initialize_chain(std::string chain_name, kinematic_chain* kinem_chain)
 {
-    std::string name = kinematic_chain->getName();
-    for(unsigned int i = 0; i < kinematic_chains.size(); ++i)
-    {           
-        if(name.compare(kinematic_chains[i].first) == 0)
-        {
-            _kinematic_chains.push_back(kinematic_chain);
-            unsigned int i = _kinematic_chains.size();
-            ROS_INFO("Added Kinematic Chain %s", name.c_str());
-            ROS_INFO("# Kinematic Chains %i", i);
-            return;
-        }
-    }
-    ROS_ERROR("Kinematic chain %s unknown", name.c_str());
+    sensor_msgs::JointState temp;
+    _kinematic_chains.emplace_back(new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",false,VOCAB3('d','i','o')));
+    from_chains_to_kdl_chain.emplace(_kinematic_chains.back(),kinem_chain);
+    temp.effort.resize(kinem_chain->getNrOfDOFs());
+    temp.position.resize(kinem_chain->getNrOfDOFs());
+    temp.velocity.resize(kinem_chain->getNrOfDOFs());
+    temp.name=kinem_chain->joint_names;
+    from_chain_to_joint_state_message[_kinematic_chains.back()]=temp;
 }
 
-bool ros_interface::setJointNames(const std::string &name,
-                                  sensor_msgs::JointState& _joint_state_msg)
-{
-    for(unsigned int i = 0; i < kinematic_chains.size(); ++i)
-    {
-        if(name.compare(kinematic_chains[i].first) == 0)
-        {
-            for(unsigned int j = 0; j < chain_joint_maps.size(); ++j)
-            {
-                if(kinematic_chains[i].first.compare(chain_joint_maps[j].first) == 0)
-                {
-                    _joint_state_msg.name.push_back(chain_joint_maps[j].second);
-                    //ROS_INFO("%s joint belongs to %s chain", chain_joint_maps[j].second.c_str(), kinematic_chains[i].first.c_str());
-                }
-            }
-            return true;
-        }
-    }
-    return false;
-}
-
-bool ros_interface::setEncodersPosition(yarp_kinematic_chain &kc,
+bool ros_interface::setEncodersPosition(walkman::drc::yarp_single_chain_interface* kc,
                                         sensor_msgs::JointState &_joint_state_msg)
 {
-    unsigned int nj = kc.getNumberOfJoints();
+    unsigned int nj = kc->getNumberOfJoints();
     yarp::sig::Vector temp(nj, 0.0);
-    kc.getEncoders(temp);
+    kc->sensePosition(temp);
     for(unsigned int i = 0; i < nj; ++i)
     {
-        _joint_state_msg.position.push_back(Deg2Rad(temp[i]));
+        _joint_state_msg.position[i]=Deg2Rad(temp[i]);
     }
     return true;
 }
 
-bool ros_interface::setEncodersSpeed(yarp_kinematic_chain &kc,
+bool ros_interface::setEncodersSpeed(walkman::drc::yarp_single_chain_interface* kc,
                                         sensor_msgs::JointState &_joint_state_msg)
 {
-    unsigned int nj = kc.getNumberOfJoints();
+    unsigned int nj = kc->getNumberOfJoints();
     yarp::sig::Vector temp(nj, 0.0);
-    kc.getEncodersSpeed(temp);
+    kc->senseVelocity(temp);
     for(unsigned int i = 0; i < nj; ++i)
     {
-        _joint_state_msg.velocity.push_back(Deg2Rad(temp[i]));
+        _joint_state_msg.velocity[i]=Deg2Rad(temp[i]);
     }
     return true;
 }
 
-bool ros_interface::setTorques(yarp_kinematic_chain &kc,
+bool ros_interface::setTorques(walkman::drc::yarp_single_chain_interface* kc,
                                sensor_msgs::JointState &_joint_state_msg)
 {
-    unsigned int nj = kc.getNumberOfJoints();
+    unsigned int nj = kc->getNumberOfJoints();
     yarp::sig::Vector temp(nj, 0.0);
-    kc.getTorques(temp);
+    kc->senseTorque(temp);
     for(unsigned int i = 0; i < nj; ++i)
     {
-        _joint_state_msg.effort.push_back(temp[i]);
+        _joint_state_msg.effort[i]=temp[i];
     }
     return true;
 }
 
 void ros_interface::publish()
 {
-    sensor_msgs::JointState joint_state_msg;
-    for(unsigned int i = 0; i < _kinematic_chains.size(); ++i)
+    for(auto joint_state_msg : from_chain_to_joint_state_message)
     {
-        setJointNames(_kinematic_chains[i]->getName(), joint_state_msg);
-        setEncodersPosition(*_kinematic_chains[i], joint_state_msg);
-        setEncodersSpeed(*_kinematic_chains[i], joint_state_msg);
-        setTorques(*_kinematic_chains[i], joint_state_msg);
+        setEncodersPosition(joint_state_msg.first, joint_state_msg.second);
+        setEncodersSpeed(joint_state_msg.first, joint_state_msg.second);
+        setTorques(joint_state_msg.first, joint_state_msg.second);
+        joint_state_msg.second.header.stamp = ros::Time::now();
+        _joint_state_pub.publish(joint_state_msg.second);
     }
-    joint_state_msg.header.stamp = ros::Time::now();
-    _joint_state_pub.publish(joint_state_msg);
+
 }
