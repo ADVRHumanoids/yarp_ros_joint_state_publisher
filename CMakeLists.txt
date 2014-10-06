@@ -75,7 +75,7 @@ include_directories(include ${YARP_INCLUDE_DIRS} #${ICUB_INCLUDE_DIRS}
 include_directories(${catkin_INCLUDE_DIRS} )
 
 ## Declare a cpp library
- add_library(yarp_ros_interface src/yarp_interface.cpp src/ros_interface.cpp)
+ add_library(yarp_ros_interface src/ros_interface.cpp)
 
 
 ## Declare a cpp executable
