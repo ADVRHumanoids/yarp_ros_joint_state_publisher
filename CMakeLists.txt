@@ -75,20 +75,18 @@ include_directories(include ${YARP_INCLUDE_DIRS} #${ICUB_INCLUDE_DIRS}
 include_directories(${catkin_INCLUDE_DIRS} )
 
 ## Declare a cpp library
- add_library(yarp_ros_interface src/ros_interface.cpp)
+# add_library(yarp_ros_interface src/ros_interface.cpp)
 
 
 ## Declare a cpp executable
- add_executable(yarp_ros_joint_state_publisher_node src/main.cpp)
+ add_executable(yarp_ros_joint_state_publisher_node src/main.cpp src/ros_interface.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(yarp_ros_joint_state_publisher_node yarp_ros_joint_state_publisher_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(yarp_ros_interface ${YARP_LIBRARIES} icubmod #${ICUB_LIBRARIES}
-				 ${catkin_LIBRARIES} ${iDynTree_LIBRARIES})
- target_link_libraries(yarp_ros_joint_state_publisher_node yarp_ros_interface ${YARP_LIBRARIES} icubmod
+ target_link_libraries(yarp_ros_joint_state_publisher_node ${YARP_LIBRARIES} icubmod
                          ${iDynTree_LIBRARIES} 
 			${catkin_LIBRARIES} ${drc_shared_LIBRARIES})
 
@@ -97,7 +95,7 @@ include_directories(${catkin_INCLUDE_DIRS} )
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS yarp_ros_interface yarp_ros_joint_state_publisher_node
+install(TARGETS yarp_ros_joint_state_publisher_node
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

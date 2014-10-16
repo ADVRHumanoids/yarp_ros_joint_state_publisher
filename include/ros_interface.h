@@ -25,6 +25,7 @@ private:
     ros::Publisher _joint_state_pub;
     urdf::Model coman_urdf;
     srdf::Model coman_srdf;
+    std::string robot_name;
     iDynUtils iDynRobot; 
     std::map<walkman::drc::yarp_single_chain_interface*, kinematic_chain*> from_chains_to_kdl_chain;
     std::map<walkman::drc::yarp_single_chain_interface*,sensor_msgs::JointState> from_chain_to_joint_state_message;

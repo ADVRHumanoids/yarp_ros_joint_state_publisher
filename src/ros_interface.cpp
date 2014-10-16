@@ -7,27 +7,27 @@
 
 ros_interface::ros_interface():
     _n(),
-    _joint_state_pub(),
-    iDynRobot("coman") //This can be changed or loaded on runtime!!
+    _joint_state_pub(),robot_name("coman"),
+    iDynRobot(robot_name) //This can be changed or loaded on runtime!!
 {
     _joint_state_pub = _n.advertise<sensor_msgs::JointState>("joint_states", 1);
-        
+
     initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm);
-    
+
     initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg);
-    
+
     initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm);
-    
+
     initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg);
-    
+
     initialize_chain(walkman::robot::torso,&iDynRobot.torso);
-    
+
 }
 
 void ros_interface::initialize_chain(std::string chain_name, kinematic_chain* kinem_chain)
 {
     sensor_msgs::JointState temp;
-    _kinematic_chains.emplace_back(new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",false,VOCAB3('d','i','o')));
+    _kinematic_chains.emplace_back(new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false));
     from_chains_to_kdl_chain.emplace(_kinematic_chains.back(),kinem_chain);
     temp.effort.resize(kinem_chain->getNrOfDOFs());
     temp.position.resize(kinem_chain->getNrOfDOFs());
