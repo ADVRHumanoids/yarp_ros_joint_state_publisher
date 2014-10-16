@@ -1,4 +1,4 @@
-#include "yarp_interface.h"
+// #include "yarp_interface.h"
 #include "ros_interface.h"
 #include <ros/ros.h>
 
@@ -20,12 +20,6 @@ int main(int argc, char **argv)
     ROS_INFO("Starting yarp_ros_joint_state_publisher node");
 
     ros_interface IRos;
-
-    for(unsigned int i = 0; i < IRos.getKinematicChains().size(); ++i)
-    {
-        boost::shared_ptr<yarp_kinematic_chain> chain(new yarp_kinematic_chain(IRos.getKinematicChains()[i].first));
-        IRos.addKinematicChain(chain);
-    }
 
     ROS_INFO("Beginning publishing joints state");
     double hz = 50.0;
