@@ -21,6 +21,7 @@ public:
 private:
     //yarp data is here, the others map use pointers
     std::vector<walkman::drc::yarp_single_chain_interface*> _kinematic_chains;
+    std::map<std::string, bool> _initialized_status;
     ros::NodeHandle _n;
     ros::Publisher _joint_state_pub;
     urdf::Model coman_urdf;
@@ -36,7 +37,7 @@ private:
     bool setTorques(walkman::drc::yarp_single_chain_interface *kinematic_chain,
                     sensor_msgs::JointState &_joint_state_msg);
     void checkSRDF();
-    void initialize_chain(std::string chain_name, kinematic_chain* kinem_chain);
+    bool initialize_chain(std::string chain_name, kinematic_chain *kinem_chain);
 };
 
 #endif

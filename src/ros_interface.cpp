@@ -12,28 +12,89 @@ ros_interface::ros_interface():
 {
     _joint_state_pub = _n.advertise<sensor_msgs::JointState>("joint_states", 1);
 
-    initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm);
+    bool done=false;
+    int counter=0;
+    _initialized_status[walkman::robot::left_arm]=false;
+    _initialized_status[walkman::robot::torso]=false;
+    _initialized_status[walkman::robot::right_leg]=false;
+    _initialized_status[walkman::robot::right_arm]=false;
+    _initialized_status[walkman::robot::left_leg]=false;
+    while (!done)
+    {
+        int initialized=0;
 
-    initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg);
+        if (initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm)) initialized++;
 
-    initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm);
+        if (initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg)) initialized++;
 
-    initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg);
+        if (initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm)) initialized++;
 
-    initialize_chain(walkman::robot::torso,&iDynRobot.torso);
+        if (initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg)) initialized++;
 
+        if (initialize_chain(walkman::robot::torso,&iDynRobot.torso)) initialized++;
+        
+        if (initialized==0)
+        {
+            std::cout<<"could not initialize any chains, is the robot running?"<<std::endl;
+            std::cout<<"Waiting for a robot"<<std::endl;
+            for (int i=0;i<_kinematic_chains.size();i++)
+                delete(_kinematic_chains[i]);
+            _kinematic_chains.clear();
+            sleep(1);
+            continue;
+        }
+        if (initialized>0 && initialized<5)
+        {
+            std::cout<<"Warning: could not initialize some chains, does the robot have all the chains?"<<std::endl;
+            for (auto it=_kinematic_chains.begin();it!=_kinematic_chains.end();)
+            {
+                if (!(*it)->isAvailable)
+                {
+                    delete(*it);
+                    it=_kinematic_chains.erase(it);
+                }
+                else
+                    ++it;
+            }
+            if (counter==initialized)
+            {
+                std::cout<<"Some chains were not initialized, I will go on without them"<<std::endl;
+                done=true;
+            }
+            else
+            {
+                std::cout<<"Some chains were not initialized, I will try again"<<std::endl;
+                counter=initialized;
+                sleep(2);
+                done=false;
+                continue;
+            }
+        }
+        done=true;
+    }
 }
 
-void ros_interface::initialize_chain(std::string chain_name, kinematic_chain* kinem_chain)
+
+bool ros_interface::initialize_chain(std::string chain_name, kinematic_chain* kinem_chain)
 {
+    if (_initialized_status[walkman::robot::left_arm])
+        return true;
     sensor_msgs::JointState temp;
     _kinematic_chains.emplace_back(new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false));
+    if (!_kinematic_chains.back()->isAvailable)
+    {
+        std::cout<<"cannot initialize chain "<<chain_name<<std::endl;
+        _initialized_status[walkman::robot::left_arm]=false;
+        return false;
+    }
     from_chains_to_kdl_chain.emplace(_kinematic_chains.back(),kinem_chain);
     temp.effort.resize(kinem_chain->getNrOfDOFs());
     temp.position.resize(kinem_chain->getNrOfDOFs());
     temp.velocity.resize(kinem_chain->getNrOfDOFs());
     temp.name=kinem_chain->joint_names;
     from_chain_to_joint_state_message[_kinematic_chains.back()]=temp;
+    _initialized_status[walkman::robot::left_arm]=true;
+    return true;
 }
 
 bool ros_interface::setEncodersPosition(walkman::drc::yarp_single_chain_interface* kc,
