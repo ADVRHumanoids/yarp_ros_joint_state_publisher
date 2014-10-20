@@ -77,7 +77,7 @@ ros_interface::ros_interface():
 
 bool ros_interface::initialize_chain(std::string chain_name, kinematic_chain* kinem_chain)
 {
-    if (_initialized_status[walkman::robot::left_arm])
+    if (_initialized_status[chain_name])
         return true;
     sensor_msgs::JointState temp;
     _kinematic_chains.emplace_back(new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false));
