@@ -80,7 +80,7 @@ bool ros_interface::initialize_chain(std::string chain_name, kinematic_chain* ki
     if (_initialized_status[chain_name])
         return true;
     sensor_msgs::JointState temp;
-    _kinematic_chains.emplace_back(new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false));
+    _kinematic_chains.emplace_back(new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false,VOCAB_CM_NONE));
     if (!_kinematic_chains.back()->isAvailable)
     {
         std::cout<<"cannot initialize chain "<<chain_name<<std::endl;
