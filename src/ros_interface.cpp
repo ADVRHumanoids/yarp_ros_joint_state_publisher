@@ -32,30 +32,17 @@ ros_interface::ros_interface():
         if (initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg)) initialized++;
 
         if (initialize_chain(walkman::robot::torso,&iDynRobot.torso)) initialized++;
-        
+
         if (initialized==0)
         {
             std::cout<<"could not initialize any chains, is the robot running?"<<std::endl;
             std::cout<<"Waiting for a robot"<<std::endl;
-            for (int i=0;i<_kinematic_chains.size();i++)
-                delete(_kinematic_chains[i]);
-            _kinematic_chains.clear();
             sleep(1);
             continue;
         }
         if (initialized>0 && initialized<5)
         {
             std::cout<<"Warning: could not initialize some chains, does the robot have all the chains?"<<std::endl;
-            for (auto it=_kinematic_chains.begin();it!=_kinematic_chains.end();)
-            {
-                if (!(*it)->isAvailable)
-                {
-                    delete(*it);
-                    it=_kinematic_chains.erase(it);
-                }
-                else
-                    ++it;
-            }
             if (counter==initialized)
             {
                 std::cout<<"Some chains were not initialized, I will go on without them"<<std::endl;
@@ -79,72 +66,66 @@ bool ros_interface::initialize_chain(std::string chain_name, kinematic_chain* ki
 {
     if (_initialized_status[chain_name])
         return true;
-    sensor_msgs::JointState temp;
-    _kinematic_chains.emplace_back(new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false,VOCAB_CM_NONE));
-    if (!_kinematic_chains.back()->isAvailable)
+    chain_info_helper temp;
+    temp.yarp_chain=new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false,VOCAB_CM_NONE);
+    if (!temp.yarp_chain->isAvailable)
     {
         std::cout<<"cannot initialize chain "<<chain_name<<std::endl;
-        _initialized_status[walkman::robot::left_arm]=false;
+        delete temp.yarp_chain;
+        _initialized_status[chain_name]=false;
         return false;
     }
-    from_chains_to_kdl_chain.emplace(_kinematic_chains.back(),kinem_chain);
-    temp.effort.resize(kinem_chain->getNrOfDOFs());
-    temp.position.resize(kinem_chain->getNrOfDOFs());
-    temp.velocity.resize(kinem_chain->getNrOfDOFs());
-    temp.name=kinem_chain->joint_names;
-    from_chain_to_joint_state_message[_kinematic_chains.back()]=temp;
-    _initialized_status[walkman::robot::left_arm]=true;
+    _kinematic_chains.push_back(temp);
+    _kinematic_chains.back().kin_chain=kinem_chain;
+    _kinematic_chains.back().temp_vector.resize(kinem_chain->getNrOfDOFs());
+    _kinematic_chains.back().temp_vector.zero();
+    _kinematic_chains.back().index=message.position.size();
+    message.effort.resize(message.effort.size()+kinem_chain->getNrOfDOFs());
+    message.position.resize(message.position.size()+kinem_chain->getNrOfDOFs());
+    message.velocity.resize(message.velocity.size()+kinem_chain->getNrOfDOFs());
+    message.name.insert(message.name.end(),kinem_chain->joint_names.begin(),kinem_chain->joint_names.end());
+    _initialized_status[chain_name]=true;
     return true;
 }
 
-bool ros_interface::setEncodersPosition(walkman::drc::yarp_single_chain_interface* kc,
-                                        sensor_msgs::JointState &_joint_state_msg)
+bool ros_interface::setEncodersPosition(chain_info_helper &chain, sensor_msgs::JointState &_joint_state_msg)
 {
-    unsigned int nj = kc->getNumberOfJoints();
-    yarp::sig::Vector temp(nj, 0.0);
-    kc->sensePosition(temp);
-    for(unsigned int i = 0; i < nj; ++i)
+    chain.yarp_chain->sensePosition(chain.temp_vector);
+    for(unsigned int i = 0; i < chain.temp_vector.size(); ++i)
     {
-        _joint_state_msg.position[i]=Deg2Rad(temp[i]);
+        _joint_state_msg.position[chain.index+i]=Deg2Rad(chain.temp_vector[i]);
     }
     return true;
 }
 
-bool ros_interface::setEncodersSpeed(walkman::drc::yarp_single_chain_interface* kc,
-                                        sensor_msgs::JointState &_joint_state_msg)
+bool ros_interface::setEncodersSpeed(chain_info_helper &chain, sensor_msgs::JointState &_joint_state_msg)
 {
-    unsigned int nj = kc->getNumberOfJoints();
-    yarp::sig::Vector temp(nj, 0.0);
-    kc->senseVelocity(temp);
-    for(unsigned int i = 0; i < nj; ++i)
+    chain.yarp_chain->senseVelocity(chain.temp_vector);
+    for(unsigned int i = 0; i < chain.temp_vector.size(); ++i)
     {
-        _joint_state_msg.velocity[i]=Deg2Rad(temp[i]);
+        _joint_state_msg.velocity[chain.index+i]=Deg2Rad(chain.temp_vector[i]);
     }
     return true;
 }
 
-bool ros_interface::setTorques(walkman::drc::yarp_single_chain_interface* kc,
-                               sensor_msgs::JointState &_joint_state_msg)
+bool ros_interface::setTorques(chain_info_helper &chain, sensor_msgs::JointState &_joint_state_msg)
 {
-    unsigned int nj = kc->getNumberOfJoints();
-    yarp::sig::Vector temp(nj, 0.0);
-    kc->senseTorque(temp);
-    for(unsigned int i = 0; i < nj; ++i)
+    chain.yarp_chain->senseTorque(chain.temp_vector);
+    for(unsigned int i = 0; i < chain.temp_vector.size(); ++i)
     {
-        _joint_state_msg.effort[i]=temp[i];
+        _joint_state_msg.effort[chain.index+i]=chain.temp_vector[i];
     }
     return true;
 }
 
 void ros_interface::publish()
 {
-    for(auto joint_state_msg : from_chain_to_joint_state_message)
+    for(auto chain:_kinematic_chains)
     {
-        setEncodersPosition(joint_state_msg.first, joint_state_msg.second);
-        setEncodersSpeed(joint_state_msg.first, joint_state_msg.second);
-        setTorques(joint_state_msg.first, joint_state_msg.second);
-        joint_state_msg.second.header.stamp = ros::Time::now();
-        _joint_state_pub.publish(joint_state_msg.second);
+        setEncodersPosition(chain,message);
+        setEncodersSpeed(chain,message);
+        setTorques(chain,message);
     }
-
+    message.header.stamp = ros::Time::now();
+    _joint_state_pub.publish(message);
 }
