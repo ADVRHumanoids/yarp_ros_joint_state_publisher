@@ -1,8 +1,8 @@
 #include "ros_interface.h"
-#include "drc_shared/yarp_single_chain_interface.h"
+#include <idynutils//yarp_single_chain_interface.h>
 #include <yarp/sig/all.h>
 #include <ros/package.h>
-#include <drc_shared/idynutils.h>
+#include <idynutils/idynutils.h>
 #define Deg2Rad(X) (X * M_PI/180.0)
 
 ros_interface::ros_interface():
@@ -67,7 +67,7 @@ bool ros_interface::initialize_chain(std::string chain_name, kinematic_chain* ki
     if (_initialized_status[chain_name])
         return true;
     chain_info_helper temp;
-    temp.yarp_chain=new walkman::drc::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false,VOCAB_CM_NONE);
+    temp.yarp_chain=new walkman::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false,VOCAB_CM_NONE);
     if (!temp.yarp_chain->isAvailable)
     {
         std::cout<<"cannot initialize chain "<<chain_name<<std::endl;

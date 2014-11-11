@@ -3,17 +3,17 @@
 
 #include <sensor_msgs/JointState.h>
 //#include "yarp_interface.h"
-#include <drc_shared/idynutils.h>
+#include <idynutils/idynutils.h>
 #include <boost/shared_ptr.hpp>
 #include <ros/publisher.h>
 #include <ros/node_handle.h>
 #include <srdfdom/model.h>
 #include <urdf/model.h>
-#include <drc_shared/yarp_single_chain_interface.h>
+#include <idynutils/yarp_single_chain_interface.h>
 
 struct chain_info_helper
 {
-    walkman::drc::yarp_single_chain_interface* yarp_chain;
+    walkman::yarp_single_chain_interface* yarp_chain;
     kinematic_chain* kin_chain;
     int index;
     yarp::sig::Vector temp_vector;
