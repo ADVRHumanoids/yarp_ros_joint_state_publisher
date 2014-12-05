@@ -67,7 +67,7 @@ bool ros_interface::initialize_chain(std::string chain_name, kinematic_chain* ki
     if (_initialized_status[chain_name])
         return true;
     chain_info_helper temp;
-    temp.yarp_chain=new walkman::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false,WALKMAN_CM_NONE);
+    temp.yarp_chain=new walkman::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false,walkman::controlTypes::none);
     if (!temp.yarp_chain->isAvailable)
     {
         std::cout<<"cannot initialize chain "<<chain_name<<std::endl;
