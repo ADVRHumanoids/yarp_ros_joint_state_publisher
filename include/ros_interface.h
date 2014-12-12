@@ -23,7 +23,8 @@ struct chain_info_helper
 class ros_interface
 {
 public:
-    ros_interface();
+    ros_interface(const std::string& robot_name_, const std::string& urdf_path,
+                  const std::string& srdf_path);
     ~ros_interface(){}
 
     void publish();

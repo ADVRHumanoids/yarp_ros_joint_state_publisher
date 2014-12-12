@@ -5,10 +5,10 @@
 #include <idynutils/idynutils.h>
 #define Deg2Rad(X) (X * M_PI/180.0)
 
-ros_interface::ros_interface():
+ros_interface::ros_interface(const std::string &robot_name_, const std::string &urdf_path, const std::string &srdf_path):
     _n(),
-    _joint_state_pub(),robot_name("coman"),
-    iDynRobot(robot_name) //This can be changed or loaded on runtime!!
+    _joint_state_pub(),robot_name(robot_name_),
+    iDynRobot(robot_name_, urdf_path, srdf_path)
 {
     _joint_state_pub = _n.advertise<sensor_msgs::JointState>("joint_states", 1);
 
