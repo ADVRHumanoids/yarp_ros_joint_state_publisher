@@ -2,7 +2,7 @@
 #define _ROS_INTERFACE_H_
 
 #include <sensor_msgs/JointState.h>
-//#include "yarp_interface.h"
+#include <geometry_msgs/WrenchStamped.h>
 #include <idynutils/idynutils.h>
 #include <boost/shared_ptr.hpp>
 #include <ros/publisher.h>
@@ -10,6 +10,7 @@
 #include <srdfdom/model.h>
 #include <urdf/model.h>
 #include <idynutils/yarp_single_chain_interface.h>
+#include <idynutils/yarp_ft_interface.h>
 
 struct chain_info_helper
 {
@@ -17,6 +18,13 @@ struct chain_info_helper
     kinematic_chain* kin_chain;
     int index;
     yarp::sig::Vector temp_vector;
+};
+
+struct ft_info_helper
+{
+    std::shared_ptr<yarp_ft_interface> ftSensor;
+    ros::Publisher ftPublisher;
+    geometry_msgs::WrenchStamped ft_msg;
 };
 
 
@@ -35,15 +43,18 @@ private:
     std::map<std::string, bool> _initialized_status;
     ros::NodeHandle _n;
     ros::Publisher _joint_state_pub;
-    urdf::Model coman_urdf;
-    srdf::Model coman_srdf;
     std::string robot_name;
-    iDynUtils iDynRobot; 
+    iDynUtils iDynRobot;
     sensor_msgs::JointState message;
+    std::vector<ft_info_helper> _ftSensors;
     bool setEncodersPosition(chain_info_helper& chain, sensor_msgs::JointState& _joint_state_msg);
     bool setEncodersSpeed(chain_info_helper& chain,sensor_msgs::JointState &_joint_state_msg);
     bool setTorques(chain_info_helper& chain,sensor_msgs::JointState &_joint_state_msg);
     bool initialize_chain(std::string chain_name, kinematic_chain *kinem_chain);
+
+    bool loadForceTorqueSensors(iDynUtils &idynutils, const std::string& _moduleName);
+    bool setFTMeasures(const ros::Time &t);
+
 };
 
 #endif

@@ -1,4 +1,3 @@
-// #include "yarp_interface.h"
 #include "ros_interface.h"
 #include <ros/ros.h>
 

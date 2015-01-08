@@ -31,6 +31,8 @@ find_package(catkin REQUIRED COMPONENTS
   urdf
   srdfdom
   sensor_msgs
+  geometry_msgs
+  moveit_core
 )
 
 ## System dependencies are found with CMake's conventions

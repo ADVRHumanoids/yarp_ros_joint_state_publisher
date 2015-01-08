@@ -59,6 +59,7 @@ ros_interface::ros_interface(const std::string &robot_name_, const std::string &
         }
         done=true;
     }
+    loadForceTorqueSensors(iDynRobot, "yarp_ros_joint_state_publisher");
 }
 
 
@@ -126,6 +127,73 @@ void ros_interface::publish()
         setEncodersSpeed(chain,message);
         setTorques(chain,message);
     }
-    message.header.stamp = ros::Time::now();
+    ros::Time t = ros::Time::now();
+    message.header.stamp = t;
+    setFTMeasures(t);
+
     _joint_state_pub.publish(message);
+
+    for(unsigned int i = 0; i < _ftSensors.size(); ++i)
+        _ftSensors.at(i).ftPublisher.publish(_ftSensors.at(i).ft_msg);
+}
+
+bool ros_interface::loadForceTorqueSensors(iDynUtils& idynutils, const std::string& _moduleName)
+{
+    std::vector<srdf::Model::Group> robot_groups = idynutils.robot_srdf->getGroups();
+    for(auto group: robot_groups)
+    {
+        if (group.name_ == walkman::robot::force_torque_sensors)
+        {
+            if(group.joints_.size() > 0) {
+                for(auto joint_name : group.joints_)
+                {
+                    std::cout << "ft sensors found on joint " << joint_name;
+
+                    std::string reference_frame = idynutils.moveit_robot_model->getJointModel(joint_name)->
+                            getChildLinkModel()->getName();
+
+                    std::cout << " on frame " << reference_frame << ". Loading ft ..." << std::endl; std::cout.flush();
+
+                    try {
+                        std::shared_ptr<yarp_ft_interface> ft( new yarp_ft_interface(reference_frame,
+                                                        _moduleName,
+                                                        idynutils.getRobotName(), reference_frame) );
+
+                        ft_info_helper tmpft;
+                        tmpft.ftSensor = ft;
+                        tmpft.ftPublisher = _n.advertise<geometry_msgs::WrenchStamped>(
+                                    reference_frame + "/ft_sensor", 1);
+                        tmpft.ft_msg.header.frame_id = reference_frame;
+
+                        _ftSensors.push_back(tmpft);
+
+
+                        std::cout << "ft on " << reference_frame << " loaded" << std::endl;
+                    } catch(...) {
+                        std::cerr << "Error loading " << reference_frame << " ft " << std::endl;
+                        return false;}
+                }
+                return true;
+            }
+        }
+    }
+    std::cout << "Robot does not have any ft sensor" << std::endl;
+    return false;
+}
+
+bool ros_interface::setFTMeasures(const ros::Time& t)
+{
+    for(unsigned int i = 0; i < _ftSensors.size(); ++i)
+    {
+        yarp::sig::Vector measures = _ftSensors.at(i).ftSensor->sense();
+
+        _ftSensors.at(i).ft_msg.wrench.force.x = measures[0];
+        _ftSensors.at(i).ft_msg.wrench.force.y = measures[1];
+        _ftSensors.at(i).ft_msg.wrench.force.z = measures[2];
+        _ftSensors.at(i).ft_msg.wrench.torque.x = measures[3];
+        _ftSensors.at(i).ft_msg.wrench.torque.y = measures[4];
+        _ftSensors.at(i).ft_msg.wrench.torque.z = measures[5];
+
+        _ftSensors.at(i).ft_msg.header.stamp = t;
+    }
 }
