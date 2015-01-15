@@ -45,6 +45,8 @@ int main(int argc, char **argv)
     while(ros::ok())
     {
         IRos.publish();
+
+        ros::spinOnce();
         loop_rate.sleep();
     }
 
