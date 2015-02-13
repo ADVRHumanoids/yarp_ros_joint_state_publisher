@@ -11,6 +11,8 @@
 #include <urdf/model.h>
 #include <idynutils/yarp_single_chain_interface.h>
 #include <idynutils/yarp_ft_interface.h>
+#include <idynutils/yarp_IMU_interface.h>
+#include <sensor_msgs/Imu.h>
 
 struct chain_info_helper
 {
@@ -25,6 +27,13 @@ struct ft_info_helper
     std::shared_ptr<yarp_ft_interface> ftSensor;
     ros::Publisher ftPublisher;
     geometry_msgs::WrenchStamped ft_msg;
+};
+
+struct imu_info_helper
+{
+    std::shared_ptr<yarp_IMU_interface> imuSensor;
+    ros::Publisher imuPublisher;
+    sensor_msgs::Imu imu_msg;
 };
 
 
@@ -47,13 +56,16 @@ private:
     iDynUtils iDynRobot;
     sensor_msgs::JointState message;
     std::vector<ft_info_helper> _ftSensors;
+    std::vector<imu_info_helper> _imuSensors;
     bool setEncodersPosition(chain_info_helper& chain, sensor_msgs::JointState& _joint_state_msg);
     bool setEncodersSpeed(chain_info_helper& chain,sensor_msgs::JointState &_joint_state_msg);
     bool setTorques(chain_info_helper& chain,sensor_msgs::JointState &_joint_state_msg);
     bool initialize_chain(std::string chain_name, kinematic_chain *kinem_chain);
 
     bool loadForceTorqueSensors(iDynUtils &idynutils, const std::string& _moduleName);
+    bool loadImuSensors(iDynUtils &idynutils, const std::string& _moduleName);
     bool setFTMeasures(const ros::Time &t);
+    bool setIMUMeasures(const ros::Time &t);
 
 };
 
