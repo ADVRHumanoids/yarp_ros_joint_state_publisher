@@ -187,12 +187,26 @@ bool ros_interface::setFTMeasures(const ros::Time& t)
     {
         yarp::sig::Vector measures = _ftSensors.at(i).ftSensor->sense();
 
-        _ftSensors.at(i).ft_msg.wrench.force.x = measures[0];
-        _ftSensors.at(i).ft_msg.wrench.force.y = measures[1];
-        _ftSensors.at(i).ft_msg.wrench.force.z = measures[2];
-        _ftSensors.at(i).ft_msg.wrench.torque.x = measures[3];
-        _ftSensors.at(i).ft_msg.wrench.torque.y = measures[4];
-        _ftSensors.at(i).ft_msg.wrench.torque.z = measures[5];
+        if(measures.size() == 6)
+        {
+            _ftSensors.at(i).ft_msg.wrench.force.x = measures[0];
+            _ftSensors.at(i).ft_msg.wrench.force.y = measures[1];
+            _ftSensors.at(i).ft_msg.wrench.force.z = measures[2];
+            _ftSensors.at(i).ft_msg.wrench.torque.x = measures[3];
+            _ftSensors.at(i).ft_msg.wrench.torque.y = measures[4];
+            _ftSensors.at(i).ft_msg.wrench.torque.z = measures[5];
+        }
+        else
+        {
+            ROS_WARN("Looks port for ft sensor in %s is not publishing values even if exists",
+                     _ftSensors.at(i).ftSensor->getReferenceFrame().c_str());
+            _ftSensors.at(i).ft_msg.wrench.force.x = 0.0;
+            _ftSensors.at(i).ft_msg.wrench.force.y = 0.0;
+            _ftSensors.at(i).ft_msg.wrench.force.z = 0.0;
+            _ftSensors.at(i).ft_msg.wrench.torque.x = 0.0;
+            _ftSensors.at(i).ft_msg.wrench.torque.y = 0.0;
+            _ftSensors.at(i).ft_msg.wrench.torque.z = 0.0;
+        }
 
         _ftSensors.at(i).ft_msg.header.stamp = t;
     }
