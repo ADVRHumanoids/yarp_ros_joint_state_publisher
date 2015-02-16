@@ -49,7 +49,7 @@ private:
     std::vector<ft_info_helper> _ftSensors;
     bool setEncodersPosition(chain_info_helper& chain, sensor_msgs::JointState& _joint_state_msg);
     bool setEncodersSpeed(chain_info_helper& chain,sensor_msgs::JointState &_joint_state_msg);
-    bool setTorques(chain_info_helper& chain,sensor_msgs::JointState &_joint_state_msg);
+    bool setEfforts(chain_info_helper& chain,sensor_msgs::JointState &_joint_state_msg);
     bool initialize_chain(std::string chain_name, kinematic_chain *kinem_chain);
 
     bool loadForceTorqueSensors(iDynUtils &idynutils, const std::string& _moduleName);

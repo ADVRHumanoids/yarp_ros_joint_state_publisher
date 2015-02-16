@@ -109,13 +109,11 @@ bool ros_interface::setEncodersSpeed(chain_info_helper &chain, sensor_msgs::Join
     return true;
 }
 
-bool ros_interface::setTorques(chain_info_helper &chain, sensor_msgs::JointState &_joint_state_msg)
+bool ros_interface::setEfforts(chain_info_helper &chain, sensor_msgs::JointState &_joint_state_msg)
 {
     chain.yarp_chain->senseTorque(chain.temp_vector);
     for(unsigned int i = 0; i < chain.temp_vector.size(); ++i)
-    {
-        _joint_state_msg.effort[chain.index+i]=chain.temp_vector[i];
-    }
+        _joint_state_msg.effort[chain.index+i]=chain.temp_vector[i]*chain.temp_vector[i];
     return true;
 }
 
@@ -125,7 +123,7 @@ void ros_interface::publish()
     {
         setEncodersPosition(chain,message);
         setEncodersSpeed(chain,message);
-        setTorques(chain,message);
+        setEfforts(chain,message);
     }
     ros::Time t = ros::Time::now();
     message.header.stamp = t;
