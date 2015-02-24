@@ -19,6 +19,7 @@ ros_interface::ros_interface(const std::string &robot_name_, const std::string &
     _initialized_status[walkman::robot::right_leg]=false;
     _initialized_status[walkman::robot::right_arm]=false;
     _initialized_status[walkman::robot::left_leg]=false;
+    _initialized_status[walkman::robot::head]=false;
     while (!done)
     {
         int initialized=0;
@@ -33,6 +34,8 @@ ros_interface::ros_interface(const std::string &robot_name_, const std::string &
 
         if (initialize_chain(walkman::robot::torso,&iDynRobot.torso)) initialized++;
 
+        if (initialize_chain(walkman::robot::head, &iDynRobot.head)) initialized++;
+
         if (initialized==0)
         {
             std::cout<<"could not initialize any chains, is the robot running?"<<std::endl;
@@ -40,7 +43,7 @@ ros_interface::ros_interface(const std::string &robot_name_, const std::string &
             sleep(1);
             continue;
         }
-        if (initialized>0 && initialized<5)
+        if (initialized>0 && initialized<6)
         {
             std::cout<<"Warning: could not initialize some chains, does the robot have all the chains?"<<std::endl;
             if (counter==initialized)
