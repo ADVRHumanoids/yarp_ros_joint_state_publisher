@@ -15,7 +15,7 @@
 struct chain_info_helper
 {
     walkman::yarp_single_chain_interface* yarp_chain;
-    kinematic_chain* kin_chain;
+//     kinematic_chain* kin_chain;
     int index;
     yarp::sig::Vector temp_vector;
 };
@@ -50,7 +50,7 @@ private:
     bool setEncodersPosition(chain_info_helper& chain, sensor_msgs::JointState& _joint_state_msg);
     bool setEncodersSpeed(chain_info_helper& chain,sensor_msgs::JointState &_joint_state_msg);
     bool setTorques(chain_info_helper& chain,sensor_msgs::JointState &_joint_state_msg);
-    bool initialize_chain(std::string chain_name, kinematic_chain *kinem_chain);
+    bool initialize_chain(std::string chain_name, kinematic_chain *kinem_chain=0);
 
     bool loadForceTorqueSensors(iDynUtils &idynutils, const std::string& _moduleName);
     bool setFTMeasures(const ros::Time &t);
