@@ -14,24 +14,24 @@ ros_interface::ros_interface(const std::string &robot_name_, const std::string &
 
     bool done=false;
     int counter=0;
-    _initialized_status[walkman::robot::left_arm]=false;
-    _initialized_status[walkman::robot::torso]=false;
+    //_initialized_status[walkman::robot::left_arm]=false;
+    //_initialized_status[walkman::robot::torso]=false;
     _initialized_status[walkman::robot::right_leg]=false;
-    _initialized_status[walkman::robot::right_arm]=false;
+    //_initialized_status[walkman::robot::right_arm]=false;
     _initialized_status[walkman::robot::left_leg]=false;
     while (!done)
     {
         int initialized=0;
 
-        if (initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm)) initialized++;
+        //if (initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm)) initialized++;
 
         if (initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg)) initialized++;
 
-        if (initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm)) initialized++;
+        //if (initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm)) initialized++;
 
         if (initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg)) initialized++;
 
-        if (initialize_chain(walkman::robot::torso,&iDynRobot.torso)) initialized++;
+        //if (initialize_chain(walkman::robot::torso,&iDynRobot.torso)) initialized++;
 
         if (initialized==0)
         {
