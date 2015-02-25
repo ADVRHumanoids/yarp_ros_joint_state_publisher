@@ -25,13 +25,13 @@ ros_interface::ros_interface(const std::string &robot_name_, const std::string &
 
         if (initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm)) initialized++;
 
-        if (initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg)) initialized++;
+        //if (initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg)) initialized++;
 
         if (initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm)) initialized++;
 
-        if (initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg)) initialized++;
+        //if (initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg)) initialized++;
 
-        if (initialize_chain(walkman::robot::torso,&iDynRobot.torso)) initialized++;
+        //if (initialize_chain(walkman::robot::torso,&iDynRobot.torso)) initialized++;
 
         if (initialized==0)
         {
