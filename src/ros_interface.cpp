@@ -24,36 +24,54 @@ ros_interface::ros_interface(const std::string &robot_name_, const std::string &
     {
         int initialized=0;
 
-        if (initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm)) initialized++;
+        if (initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm))
+            initialized++;
+        else
+            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN left_arm!");
 
-        if (initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg)) initialized++;
+        if (initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg))
+            initialized++;
+        else
+            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN left_leg!");
 
-        if (initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm)) initialized++;
+        if (initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm))
+            initialized++;
+        else
+            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN right_arm!");
 
-        if (initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg)) initialized++;
+        if (initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg))
+            initialized++;
+        else
+            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN right_leg!");
 
-        if (initialize_chain(walkman::robot::torso,&iDynRobot.torso)) initialized++;
+        if (initialize_chain(walkman::robot::torso,&iDynRobot.torso))
+            initialized++;
+        else
+            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN torso!");
 
-        if (initialize_chain(walkman::robot::head, &iDynRobot.head)) initialized++;
+        if (initialize_chain(walkman::robot::head, &iDynRobot.head))
+            initialized++;
+        else
+            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN head!");
 
         if (initialized==0)
         {
-            std::cout<<"could not initialize any chains, is the robot running?"<<std::endl;
-            std::cout<<"Waiting for a robot"<<std::endl;
+            ROS_WARN("Could not initialize any chains, is the robot running?");
+            ROS_WARN("Waiting for a robot...");
             sleep(1);
             continue;
         }
         if (initialized>0 && initialized<6)
         {
-            std::cout<<"Warning: could not initialize some chains, does the robot have all the chains?"<<std::endl;
+            ROS_WARN("Could not initialize some chains, does the robot have all the chains?");
             if (counter==initialized)
             {
-                std::cout<<"Some chains were not initialized, I will go on without them"<<std::endl;
+                ROS_WARN("Some chains were not initialized, I will go on without them");
                 done=true;
             }
             else
             {
-                std::cout<<"Some chains were not initialized, I will try again"<<std::endl;
+                ROS_WARN("Some chains were not initialized, I will try again");
                 counter=initialized;
                 sleep(2);
                 done=false;
@@ -74,7 +92,6 @@ bool ros_interface::initialize_chain(std::string chain_name, kinematic_chain* ki
     temp.yarp_chain=new walkman::yarp_single_chain_interface(chain_name,"yarp_ros_joint_state_publisher",robot_name,false,walkman::controlTypes::none);
     if (!temp.yarp_chain->isAvailable)
     {
-        std::cout<<"cannot initialize chain "<<chain_name<<std::endl;
         delete temp.yarp_chain;
         _initialized_status[chain_name]=false;
         return false;
@@ -96,9 +113,7 @@ bool ros_interface::setEncodersPosition(chain_info_helper &chain, sensor_msgs::J
 {
     chain.yarp_chain->sensePosition(chain.temp_vector);
     for(unsigned int i = 0; i < chain.temp_vector.size(); ++i)
-    {
         _joint_state_msg.position[chain.index+i]=Deg2Rad(chain.temp_vector[i]);
-    }
     return true;
 }
 
@@ -106,9 +121,7 @@ bool ros_interface::setEncodersSpeed(chain_info_helper &chain, sensor_msgs::Join
 {
     chain.yarp_chain->senseVelocity(chain.temp_vector);
     for(unsigned int i = 0; i < chain.temp_vector.size(); ++i)
-    {
         _joint_state_msg.velocity[chain.index+i]=Deg2Rad(chain.temp_vector[i]);
-    }
     return true;
 }
 
@@ -148,12 +161,10 @@ bool ros_interface::loadForceTorqueSensors(iDynUtils& idynutils, const std::stri
             if(group.joints_.size() > 0) {
                 for(auto joint_name : group.joints_)
                 {
-                    std::cout << "ft sensors found on joint " << joint_name;
-
                     std::string reference_frame = idynutils.moveit_robot_model->getJointModel(joint_name)->
                             getChildLinkModel()->getName();
 
-                    std::cout << " on frame " << reference_frame << ". Loading ft ..." << std::endl; std::cout.flush();
+                    ROS_INFO("ft sensors found on joint %s on frame %s. Loading ft ...", joint_name.c_str(), reference_frame.c_str());
 
                     try {
                         std::shared_ptr<yarp_ft_interface> ft( new yarp_ft_interface(reference_frame,
@@ -168,17 +179,16 @@ bool ros_interface::loadForceTorqueSensors(iDynUtils& idynutils, const std::stri
 
                         _ftSensors.push_back(tmpft);
 
-
-                        std::cout << "ft on " << reference_frame << " loaded" << std::endl;
+                        ROS_INFO("ft on %s loaded!", reference_frame.c_str());
                     } catch(...) {
-                        std::cerr << "Error loading " << reference_frame << " ft " << std::endl;
+                        ROS_ERROR("Error loading %s ft!", reference_frame.c_str());
                         return false;}
                 }
                 return true;
             }
         }
     }
-    std::cout << "Robot does not have any ft sensor" << std::endl;
+    ROS_INFO("Robot does not have any ft sensor");
     return false;
 }
 
