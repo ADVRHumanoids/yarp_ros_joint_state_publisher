@@ -9,77 +9,35 @@ ros_interface::ros_interface(const std::string &robot_name_, const std::string &
     _n(),
     _joint_state_pub(),robot_name(robot_name_),
     iDynRobot(robot_name_, urdf_path, srdf_path)
-{
+{   
     _joint_state_pub = _n.advertise<sensor_msgs::JointState>("joint_states", 1);
 
-    bool done=false;
-    int counter=0;
+
     _initialized_status[walkman::robot::left_arm]=false;
     _initialized_status[walkman::robot::torso]=false;
     _initialized_status[walkman::robot::right_leg]=false;
     _initialized_status[walkman::robot::right_arm]=false;
     _initialized_status[walkman::robot::left_leg]=false;
     _initialized_status[walkman::robot::head]=false;
-    while (!done)
-    {
-        int initialized=0;
 
-        if (initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm))
-            initialized++;
-        else
-            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN left_arm!");
+    if(!initialize_chain(walkman::robot::left_arm,&iDynRobot.left_arm))
+        ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN left_arm!");
 
-        if (initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg))
-            initialized++;
-        else
-            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN left_leg!");
+    if(!initialize_chain(walkman::robot::left_leg,&iDynRobot.left_leg))
+        ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN left_leg!");
 
-        if (initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm))
-            initialized++;
-        else
-            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN right_arm!");
+    if(!initialize_chain(walkman::robot::right_arm,&iDynRobot.right_arm))
+        ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN right_arm!");
 
-        if (initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg))
-            initialized++;
-        else
-            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN right_leg!");
+    if(!initialize_chain(walkman::robot::right_leg,&iDynRobot.right_leg))
+        ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN right_leg!");
 
-        if (initialize_chain(walkman::robot::torso,&iDynRobot.torso))
-            initialized++;
-        else
-            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN torso!");
+    if(!initialize_chain(walkman::robot::torso,&iDynRobot.torso))
+        ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN torso!");
 
-        if (initialize_chain(walkman::robot::head, &iDynRobot.head))
-            initialized++;
-        else
-            ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN head!");
+    if(!initialize_chain(walkman::robot::head, &iDynRobot.head))
+        ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN head!");
 
-        if (initialized==0)
-        {
-            ROS_WARN("Could not initialize any chains, is the robot running?");
-            ROS_WARN("Waiting for a robot...");
-            sleep(1);
-            continue;
-        }
-        if (initialized>0 && initialized<6)
-        {
-            ROS_WARN("Could not initialize some chains, does the robot have all the chains?");
-            if (counter==initialized)
-            {
-                ROS_WARN("Some chains were not initialized, I will go on without them");
-                done=true;
-            }
-            else
-            {
-                ROS_WARN("Some chains were not initialized, I will try again");
-                counter=initialized;
-                sleep(2);
-                done=false;
-                continue;
-            }
-        }
-        done=true;
-    }
     loadForceTorqueSensors(iDynRobot, "yarp_ros_joint_state_publisher");
     loadImuSensors(iDynRobot, "yarp_ros_joint_state_publisher");
 }
@@ -136,11 +94,14 @@ bool ros_interface::setEfforts(chain_info_helper &chain, sensor_msgs::JointState
 
 void ros_interface::publish()
 {
-    for(auto chain:_kinematic_chains)
+    for(unsigned int i = 0; i < _kinematic_chains.size(); ++i)
     {
-        setEncodersPosition(chain,message);
-        setEncodersSpeed(chain,message);
-        setEfforts(chain,message);
+        if(_initialized_status[_kinematic_chains[i].kin_chain->chain_name]){
+            setEncodersPosition(_kinematic_chains[i],message);
+            setEncodersSpeed(_kinematic_chains[i],message);
+            setEfforts(_kinematic_chains[i],message);
+        }
+
     }
     ros::Time t = ros::Time::now();
     message.header.stamp = t;
@@ -283,7 +244,7 @@ bool ros_interface::setFTMeasures(const ros::Time& t)
         }
         else
         {
-            ROS_WARN("Looks port for ft sensor in %s is not publishing values even if exists",
+            ROS_WARN_ONCE("Looks port for ft sensor in %s is not publishing values even if exists",
                      _ftSensors.at(i).ftSensor->getReferenceFrame().c_str());
             _ftSensors.at(i).ft_msg.wrench.force.x = 0.0;
             _ftSensors.at(i).ft_msg.wrench.force.y = 0.0;
