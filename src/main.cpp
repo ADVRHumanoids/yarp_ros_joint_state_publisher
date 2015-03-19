@@ -40,7 +40,8 @@ int main(int argc, char **argv)
 
     ROS_INFO("Beginning publishing joints state");
     double hz;
-    n.param("/rate", hz, 50.0);
+    n.param("rate", hz, 50.0);
+
     ros::Rate loop_rate(hz);
     while(ros::ok())
     {
