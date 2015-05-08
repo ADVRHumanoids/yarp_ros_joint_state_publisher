@@ -88,7 +88,7 @@ bool ros_interface::setEfforts(chain_info_helper &chain, sensor_msgs::JointState
 {
     chain.yarp_chain->senseTorque(chain.temp_vector);
     for(unsigned int i = 0; i < chain.temp_vector.size(); ++i)
-        _joint_state_msg.effort[chain.index+i]=chain.temp_vector[i]*chain.temp_vector[i];
+        _joint_state_msg.effort[chain.index+i] = chain.temp_vector[i];
     return true;
 }
 
