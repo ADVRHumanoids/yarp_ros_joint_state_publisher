@@ -88,7 +88,7 @@ include_directories(${catkin_INCLUDE_DIRS} ${GYM_INCLUDE_DIRS} ${idynutils_INCLU
 # add_dependencies(yarp_ros_joint_state_publisher_node yarp_ros_joint_state_publisher_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(yarp_ros_joint_state_publisher_node ${YARP_LIBRARIES} icubmod
+ target_link_libraries(yarp_ros_joint_state_publisher_node ${YARP_LIBRARIES}
                          ${iDynTree_LIBRARIES} 
                         ${catkin_LIBRARIES} ${GYM_LIBRARIES} ${idynutils_LIBRARIES})
 
