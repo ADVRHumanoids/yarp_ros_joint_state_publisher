@@ -39,12 +39,12 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(YARP REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(drc_shared REQUIRED)
 find_package(kdl_codyco REQUIRED)
 find_package(iDynTree REQUIRED)
 find_package(GYM REQUIRED)
 find_package(idynutils REQUIRED)
 find_package(paramHelp REQUIRED)
-
 
 
 set(ROS_LIB_FOLDER $ENV{ROS_LIB_FOLDER} CACHE STRING "ros lib folder")
@@ -75,7 +75,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(include ${YARP_INCLUDE_DIRS} #${ICUB_INCLUDE_DIRS}
-                         ${EIGEN3_INCLUDE_DIR})
+			 ${EIGEN3_INCLUDE_DIR})
 include_directories(${catkin_INCLUDE_DIRS} ${GYM_INCLUDE_DIRS} ${idynutils_INCLUDE_DIRS})
 
 ## Declare a cpp library
@@ -90,7 +90,7 @@ include_directories(${catkin_INCLUDE_DIRS} ${GYM_INCLUDE_DIRS} ${idynutils_INCLU
 # add_dependencies(yarp_ros_joint_state_publisher_node yarp_ros_joint_state_publisher_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(yarp_ros_joint_state_publisher_node ${YARP_LIBRARIES} icubmod
+ target_link_libraries(yarp_ros_joint_state_publisher_node ${YARP_LIBRARIES}
                          ${iDynTree_LIBRARIES} 
                         ${catkin_LIBRARIES} ${GYM_LIBRARIES} ${idynutils_LIBRARIES})
 
