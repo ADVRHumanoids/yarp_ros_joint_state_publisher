@@ -15,6 +15,9 @@
        <param name="robot_name" type="string" value="coman" />
        <param name="urdf_path" type="string" value="$(find coman_urdf)/urdf/coman.urdf" />
        <param name="srdf_path" type="string" value="$(find coman_srdf)/srdf/coman.srdf" />
+       <rosparam param="ft_frames">["l_leg_ft", "r_leg_ft"]</rosparam>
+       <rosparam param="ZMP_frames">["l_sole", "r_sole"]</rosparam>
+       <remap from="imu" to="imu_link/imu_sensor"/>
      </node>
 
 </launch>
