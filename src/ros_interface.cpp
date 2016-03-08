@@ -39,6 +39,7 @@ ros_interface::ros_interface(const std::string &robot_name_, const std::string &
         ROS_WARN("CAN NOT INITIALIZE EXPECTED CHAIN head!");
 
     loadForceTorqueSensors(iDynRobot, "yarp_ros_joint_state_publisher");
+    loadImuSensors(iDynRobot, "yarp_ros_joint_state_publisher");
 }
 
 
@@ -105,11 +106,57 @@ void ros_interface::publish()
     ros::Time t = ros::Time::now();
     message.header.stamp = t;
     setFTMeasures(t);
+    setIMUMeasures(t);
 
     _joint_state_pub.publish(message);
 
     for(unsigned int i = 0; i < _ftSensors.size(); ++i)
         _ftSensors.at(i).ftPublisher.publish(_ftSensors.at(i).ft_msg);
+    for(unsigned int i = 0; i < _imuSensors.size(); ++i)
+        _imuSensors.at(i).imuPublisher.publish(_imuSensors.at(i).imu_msg);
+}
+
+bool ros_interface::loadImuSensors(iDynUtils &idynutils, const std::string& _moduleName)
+{
+    std::vector<srdf::Model::Group> robot_groups = idynutils.robot_srdf->getGroups();
+    for(unsigned int i = 0; i < robot_groups.size(); ++i)
+    {
+        srdf::Model::Group group = robot_groups[i];
+        if(group.name_ == walkman::robot::imu_sensors){
+            if(group.links_.size() > 0){
+                for(unsigned int j = 0; j < group.links_.size(); ++j)
+                {
+                    std::string link = group.links_[j];
+                    std::cout << "imu sensor found on link "<<link<<std::endl;
+
+                    try{
+                        std::shared_ptr<yarp_IMU_interface> imu( new yarp_IMU_interface(_moduleName,
+                                                        idynutils.getRobotName(), true, link) );
+
+                        imu_info_helper tmpimu;
+                        tmpimu.imuSensor = imu;
+                        tmpimu.imuPublisher = _n.advertise<sensor_msgs::Imu>(
+                                    link + "/imu_sensor", 1);
+                        tmpimu.imu_msg.header.frame_id = link;
+
+                        for(unsigned int k = 0; k < tmpimu.imu_msg.angular_velocity_covariance.size(); ++k){
+                            tmpimu.imu_msg.angular_velocity_covariance[k] = 0.0;
+                            tmpimu.imu_msg.linear_acceleration_covariance[k] = 0.0;
+                            tmpimu.imu_msg.orientation_covariance[k] = 0.0;}
+
+                        _imuSensors.push_back(tmpimu);
+
+                        std::cout << "imu on " << link << " loaded" << std::endl;
+                    } catch(...) {
+                        std::cerr << "Error loading " << link << " imu " << std::endl;
+                        return false;}
+                }
+                return true;
+            }
+        }
+    }
+    std::cout << "Robot does not have any imu sensor" << std::endl;
+    return false;
 }
 
 bool ros_interface::loadForceTorqueSensors(iDynUtils& idynutils, const std::string& _moduleName)
@@ -151,6 +198,33 @@ bool ros_interface::loadForceTorqueSensors(iDynUtils& idynutils, const std::stri
     }
     ROS_INFO("Robot does not have any ft sensor");
     return false;
+}
+
+bool ros_interface::setIMUMeasures(const ros::Time &t)
+{
+    for(unsigned int i = 0; i < _imuSensors.size(); ++i)
+    {
+        KDL::Rotation orientation;
+        KDL::Vector linearAcc;
+        KDL::Vector angularVel;
+        _imuSensors.at(i).imuSensor->sense(orientation, linearAcc, angularVel);
+
+        double x, y, z, w;
+        orientation.GetQuaternion(x, y, z, w);
+
+        _imuSensors.at(i).imu_msg.orientation.x = x;
+        _imuSensors.at(i).imu_msg.orientation.y = y;
+        _imuSensors.at(i).imu_msg.orientation.z = z;
+        _imuSensors.at(i).imu_msg.orientation.w = w;
+        _imuSensors.at(i).imu_msg.angular_velocity.x = angularVel.x();
+        _imuSensors.at(i).imu_msg.angular_velocity.y = angularVel.y();
+        _imuSensors.at(i).imu_msg.angular_velocity.z = angularVel.z();
+        _imuSensors.at(i).imu_msg.linear_acceleration.x = linearAcc.x();
+        _imuSensors.at(i).imu_msg.linear_acceleration.y = linearAcc.y();
+        _imuSensors.at(i).imu_msg.linear_acceleration.z = linearAcc.z();
+
+        _imuSensors.at(i).imu_msg.header.stamp = t;
+    }
 }
 
 bool ros_interface::setFTMeasures(const ros::Time& t)
